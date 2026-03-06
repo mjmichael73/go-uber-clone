@@ -117,14 +117,14 @@ func (s *GeoStore) GetNearby(ctx context.Context, entityType string, lat, lng, r
 }
 
 func (s *GeoStore) CalculateETA(lat1, lon1, lat2, lon2 float64) (float64, float64) {
-	distanceKm := haversine(lat1, lon1, lat2, lon2)
+	distanceKm := Haversine(lat1, lon1, lat2, lon2)
 	// Assume average speed of 30 km/h in city
 	etaMinutes := (distanceKm / 30.0) * 60.0
 	return etaMinutes, distanceKm
 }
 
 func (s *GeoStore) CalculateRoute(lat1, lon1, lat2, lon2 float64) (float64, float64, [][]float64) {
-	distanceKm := haversine(lat1, lon1, lat2, lon2)
+	distanceKm := Haversine(lat1, lon1, lat2, lon2)
 	durationMin := (distanceKm / 30.0) * 60.0
 
 	// Generate simple polyline (in production, use a routing engine)
@@ -141,7 +141,7 @@ func (s *GeoStore) CalculateRoute(lat1, lon1, lat2, lon2 float64) (float64, floa
 	return distanceKm, durationMin, polyline
 }
 
-func haversine(lat1, lon1, lat2, lon2 float64) float64 {
+func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	const R = 6371
 	dLat := (lat2 - lat1) * math.Pi / 180
 	dLon := (lon2 - lon1) * math.Pi / 180

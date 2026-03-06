@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"io"
 	"log"
 
@@ -149,4 +150,3 @@ func (h *LocationHandler) StreamLocation(stream pb.LocationService_StreamLocatio
 }
 
 // Need to add context import
-import "context"
