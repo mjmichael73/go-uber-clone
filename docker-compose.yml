@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # Infrastructure
+  postgres:
+    image: postgres:15-alpine
+    container_name: uber-postgres
+    environment:
+      POSTGRES_USER: uber
+      POSTGRES_PASSWORD: uber123
+      POSTGRES_DB: uberdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uber -d uberdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: uber-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: uber-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+
+  # Microservices
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: user-service
+    container_name: uber-user-service
+    environment:
+      SERVICE_PORT: "50051"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: uber
+      DB_PASSWORD: uber123
+      DB_NAME: uberdb
+      DB_SSLMODE: disable
+      JWT_SECRET: "your-super-secret-key-change-in-production"
+      REDIS_ADDR: redis:6379
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  driver-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: driver-service
+    container_name: uber-driver-service
+    environment:
+      SERVICE_PORT: "50052"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: uber
+      DB_PASSWORD: uber123
+      DB_NAME: uberdb
+      DB_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+    ports:
+      - "50052:50052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ride-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: ride-service
+    container_name: uber-ride-service
+    environment:
+      SERVICE_PORT: "50053"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: uber
+      DB_PASSWORD: uber123
+      DB_NAME: uberdb
+      DB_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      NATS_URL: nats://nats:4222
+      DRIVER_SERVICE_ADDR: driver-service:50052
+      PAYMENT_SERVICE_ADDR: payment-service:50055
+      NOTIFICATION_SERVICE_ADDR: notification-service:50056
+    ports:
+      - "50053:50053"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      driver-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    restart: unless-stopped
+
+  location-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: location-service
+    container_name: uber-location-service
+    environment:
+      SERVICE_PORT: "50054"
+      REDIS_ADDR: redis:6379
+    ports:
+      - "50054:50054"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: payment-service
+    container_name: uber-payment-service
+    environment:
+      SERVICE_PORT: "50055"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: uber
+      DB_PASSWORD: uber123
+      DB_NAME: uberdb
+      DB_SSLMODE: disable
+    ports:
+      - "50055:50055"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: notification-service
+    container_name: uber-notification-service
+    environment:
+      SERVICE_PORT: "50056"
+      REDIS_ADDR: redis:6379
+      NATS_URL: nats://nats:4222
+    ports:
+      - "50056:50056"
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+    container_name: uber-api-gateway
+    environment:
+      SERVICE_PORT: "8080"
+      JWT_SECRET: "your-super-secret-key-change-in-production"
+      USER_SERVICE_ADDR: user-service:50051
+      DRIVER_SERVICE_ADDR: driver-service:50052
+      RIDE_SERVICE_ADDR: ride-service:50053
+      LOCATION_SERVICE_ADDR: location-service:50054
+      PAYMENT_SERVICE_ADDR: payment-service:50055
+      NOTIFICATION_SERVICE_ADDR: notification-service:50056
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - driver-service
+      - ride-service
+      - location-service
+      - payment-service
+      - notification-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
