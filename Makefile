@@ -5,23 +5,23 @@ GO_OUT=pkg/pb
 
 proto:
 	@echo "Generating protobuf code..."
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/user/user.proto
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/driver/driver.proto
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/ride/ride.proto
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/location/location.proto
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/payment/payment.proto
-	protoc --go_out=$(GO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=paths=import \
+		--go-grpc_out=. --go-grpc_opt=paths=import \
 		$(PROTO_DIR)/notification/notification.proto
 
 build:
