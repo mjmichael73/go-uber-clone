@@ -19,18 +19,33 @@ func NewDriverHTTPHandler(driverClient pb.DriverServiceClient) *DriverHTTPHandle
 	return &DriverHTTPHandler{driverClient: driverClient}
 }
 
+type RegisterDriverRequest struct {
+	LicenseNumber string `json:"license_number" binding:"required"`
+	VehicleMake   string `json:"vehicle_make"`
+	VehicleModel  string `json:"vehicle_model"`
+	VehicleYear   string `json:"vehicle_year"`
+	VehicleColor  string `json:"vehicle_color"`
+	PlateNumber   string `json:"plate_number"`
+	VehicleType   string `json:"vehicle_type"`
+}
+
+// RegisterDriver godoc
+// @Summary Register as a driver
+// @Description Register the current user as a driver
+// @Tags drivers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body RegisterDriverRequest true "Driver registration details"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /drivers/register [post]
 func (h *DriverHTTPHandler) RegisterDriver(c *gin.Context) {
 	userID := c.GetString("user_id")
 
-	var req struct {
-		LicenseNumber string `json:"license_number" binding:"required"`
-		VehicleMake   string `json:"vehicle_make"`
-		VehicleModel  string `json:"vehicle_model"`
-		VehicleYear   string `json:"vehicle_year"`
-		VehicleColor  string `json:"vehicle_color"`
-		PlateNumber   string `json:"plate_number"`
-		VehicleType   string `json:"vehicle_type"`
-	}
+	var req RegisterDriverRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,6 +86,18 @@ func (h *DriverHTTPHandler) RegisterDriver(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+// GetDriver godoc
+// @Summary Get driver details
+// @Description Get details of a specific driver by ID
+// @Tags drivers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Driver ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /drivers/{id} [get]
 func (h *DriverHTTPHandler) GetDriver(c *gin.Context) {
 	driverID := c.Param("id")
 
@@ -86,11 +113,26 @@ func (h *DriverHTTPHandler) GetDriver(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+type UpdateStatusRequest struct {
+	DriverID string `json:"driver_id"`
+	Status   string `json:"status" binding:"required"`
+}
+
+// UpdateStatus godoc
+// @Summary Update driver status
+// @Description Update the status of a driver (AVAILABLE, BUSY, ON_RIDE, OFFLINE)
+// @Tags drivers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body UpdateStatusRequest true "Status update details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /drivers/status [put]
 func (h *DriverHTTPHandler) UpdateStatus(c *gin.Context) {
-	var req struct {
-		DriverID string `json:"driver_id"`
-		Status   string `json:"status" binding:"required"`
-	}
+	var req UpdateStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -133,14 +175,29 @@ func (h *DriverHTTPHandler) UpdateStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+type UpdateLocationRequest struct {
+	DriverID  string  `json:"driver_id"`
+	Latitude  float64 `json:"latitude" binding:"required"`
+	Longitude float64 `json:"longitude" binding:"required"`
+	Heading   float64 `json:"heading"`
+	Speed     float64 `json:"speed"`
+}
+
+// UpdateLocation godoc
+// @Summary Update driver location
+// @Description Update the current geographical location of a driver
+// @Tags drivers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body UpdateLocationRequest true "Location update details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /drivers/location [post]
 func (h *DriverHTTPHandler) UpdateLocation(c *gin.Context) {
-	var req struct {
-		DriverID  string  `json:"driver_id"`
-		Latitude  float64 `json:"latitude" binding:"required"`
-		Longitude float64 `json:"longitude" binding:"required"`
-		Heading   float64 `json:"heading"`
-		Speed     float64 `json:"speed"`
-	}
+	var req UpdateLocationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -173,6 +230,21 @@ func (h *DriverHTTPHandler) UpdateLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetNearbyDrivers godoc
+// @Summary Get nearby drivers
+// @Description Get a list of drivers near a specific location
+// @Tags drivers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param latitude query number true "Latitude"
+// @Param longitude query number true "Longitude"
+// @Param radius query number false "Radius in KM (default 5)"
+// @Param limit query int false "Limit results (default 10)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /drivers/nearby [get]
 func (h *DriverHTTPHandler) GetNearbyDrivers(c *gin.Context) {
 	lat, _ := strconv.ParseFloat(c.Query("latitude"), 64)
 	lng, _ := strconv.ParseFloat(c.Query("longitude"), 64)

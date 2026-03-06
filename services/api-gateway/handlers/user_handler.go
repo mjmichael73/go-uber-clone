@@ -32,6 +32,17 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user with the given details
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Registration details"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /auth/register [post]
 func (h *UserHTTPHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,6 +77,17 @@ func (h *UserHTTPHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login a user
+// @Description Login with email and password to get a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login credentials"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /auth/login [post]
 func (h *UserHTTPHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -92,6 +114,17 @@ func (h *UserHTTPHandler) Login(c *gin.Context) {
 	})
 }
 
+// GetProfile godoc
+// @Summary Get user profile
+// @Description Get the profile of the currently authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /users/profile [get]
 func (h *UserHTTPHandler) GetProfile(c *gin.Context) {
 	userID := c.GetString("user_id")
 
@@ -118,14 +151,29 @@ func (h *UserHTTPHandler) GetProfile(c *gin.Context) {
 	})
 }
 
+type UpdateProfileRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
+}
+
+// UpdateProfile godoc
+// @Summary Update user profile
+// @Description Update the profile of the currently authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body UpdateProfileRequest true "Profile details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /users/profile [put]
 func (h *UserHTTPHandler) UpdateProfile(c *gin.Context) {
 	userID := c.GetString("user_id")
 
-	var req struct {
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		Phone     string `json:"phone"`
-	}
+	var req UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -4,6 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
 
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/mjmichael73/go-uber-clone/services/api-gateway/docs"
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/services/api-gateway/handlers"
 )
@@ -21,6 +25,9 @@ func SetupRouter(
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
+	// Swagger documentation
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Public routes
 	public := r.Group("/api/v1")

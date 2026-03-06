@@ -1,0 +1,921 @@
+basePath: /api/v1
+definitions:
+  handlers.AcceptRideRequest:
+    properties:
+      driver_id:
+        type: string
+    required:
+    - driver_id
+    type: object
+  handlers.CancelRideRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  handlers.CompleteRideRequest:
+    properties:
+      driver_id:
+        type: string
+      final_latitude:
+        type: number
+      final_longitude:
+        type: number
+    required:
+    - driver_id
+    type: object
+  handlers.EstimateRideRequest:
+    properties:
+      dropoff_latitude:
+        type: number
+      dropoff_longitude:
+        type: number
+      pickup_latitude:
+        type: number
+      pickup_longitude:
+        type: number
+    required:
+    - dropoff_latitude
+    - dropoff_longitude
+    - pickup_latitude
+    - pickup_longitude
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.RateRideRequest:
+    properties:
+      comment:
+        type: string
+      rating:
+        maximum: 5
+        minimum: 1
+        type: number
+    required:
+    - rating
+    type: object
+  handlers.RegisterDriverRequest:
+    properties:
+      license_number:
+        type: string
+      plate_number:
+        type: string
+      vehicle_color:
+        type: string
+      vehicle_make:
+        type: string
+      vehicle_model:
+        type: string
+      vehicle_type:
+        type: string
+      vehicle_year:
+        type: string
+    required:
+    - license_number
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      user_type:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - phone
+    type: object
+  handlers.RideRequest:
+    properties:
+      dropoff_address:
+        type: string
+      dropoff_latitude:
+        type: number
+      dropoff_longitude:
+        type: number
+      payment_method:
+        type: string
+      pickup_address:
+        type: string
+      pickup_latitude:
+        type: number
+      pickup_longitude:
+        type: number
+      vehicle_type:
+        type: string
+    required:
+    - dropoff_latitude
+    - dropoff_longitude
+    - pickup_latitude
+    - pickup_longitude
+    type: object
+  handlers.StartRideRequest:
+    properties:
+      driver_id:
+        type: string
+    required:
+    - driver_id
+    type: object
+  handlers.UpdateLocationRequest:
+    properties:
+      driver_id:
+        type: string
+      heading:
+        type: number
+      latitude:
+        type: number
+      longitude:
+        type: number
+      speed:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  handlers.UpdateProfileRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    type: object
+  handlers.UpdateStatusRequest:
+    properties:
+      driver_id:
+        type: string
+      status:
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample Uber clone API server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Go Uber Clone API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to get a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login a user
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the given details
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /drivers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific driver by ID
+      parameters:
+      - description: Driver ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get driver details
+      tags:
+      - drivers
+  /drivers/location:
+    post:
+      consumes:
+      - application/json
+      description: Update the current geographical location of a driver
+      parameters:
+      - description: Location update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update driver location
+      tags:
+      - drivers
+  /drivers/nearby:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of drivers near a specific location
+      parameters:
+      - description: Latitude
+        in: query
+        name: latitude
+        required: true
+        type: number
+      - description: Longitude
+        in: query
+        name: longitude
+        required: true
+        type: number
+      - description: Radius in KM (default 5)
+        in: query
+        name: radius
+        type: number
+      - description: Limit results (default 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get nearby drivers
+      tags:
+      - drivers
+  /drivers/register:
+    post:
+      consumes:
+      - application/json
+      description: Register the current user as a driver
+      parameters:
+      - description: Driver registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterDriverRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Register as a driver
+      tags:
+      - drivers
+  /drivers/status:
+    put:
+      consumes:
+      - application/json
+      description: Update the status of a driver (AVAILABLE, BUSY, ON_RIDE, OFFLINE)
+      parameters:
+      - description: Status update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update driver status
+      tags:
+      - drivers
+  /rides/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific ride by ID
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get ride details
+      tags:
+      - rides
+  /rides/{id}/accept:
+    post:
+      consumes:
+      - application/json
+      description: Accept a ride request by a driver
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Accept ride details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AcceptRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Accept a ride request
+      tags:
+      - rides
+  /rides/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing or requested ride
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cancel ride details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CancelRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel a ride
+      tags:
+      - rides
+  /rides/{id}/complete:
+    post:
+      consumes:
+      - application/json
+      description: Mark a ride as completed and calculate final fare
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Complete ride details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CompleteRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Complete a ride
+      tags:
+      - rides
+  /rides/{id}/rate:
+    post:
+      consumes:
+      - application/json
+      description: Submit a rating and comment for a completed ride
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rating details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RateRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Rate a ride
+      tags:
+      - rides
+  /rides/{id}/start:
+    post:
+      consumes:
+      - application/json
+      description: Mark a ride as started by the driver
+      parameters:
+      - description: Ride ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Start ride details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.StartRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Start a ride
+      tags:
+      - rides
+  /rides/active:
+    get:
+      consumes:
+      - application/json
+      description: Get the currently active ride for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active ride
+      tags:
+      - rides
+  /rides/estimate:
+    post:
+      consumes:
+      - application/json
+      description: Get fare estimates for different vehicle types between two locations
+      parameters:
+      - description: Estimation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.EstimateRideRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Estimate ride fare
+      tags:
+      - rides
+  /rides/history:
+    get:
+      consumes:
+      - application/json
+      description: Get the ride history for the authenticated user with pagination
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get ride history
+      tags:
+      - rides
+  /rides/request:
+    post:
+      consumes:
+      - application/json
+      description: Request a new ride with pickup and dropoff locations
+      parameters:
+      - description: Ride request details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RideRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Request a ride
+      tags:
+      - rides
+  /users/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get the profile of the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update the profile of the currently authenticated user
+      parameters:
+      - description: Profile details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -44,3 +44,6 @@ migrate:
 	@for f in migrations/*.sql; do \
 		docker exec -i uber-postgres psql -U uber -d uberdb < $$f; \
 	done
+
+generate-swagger:
+	/home/ubuntu/go/bin/swag init -g services/api-gateway/main.go -o services/api-gateway/docs

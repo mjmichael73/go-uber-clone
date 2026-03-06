@@ -21,6 +21,25 @@ import (
 	"github.com/mjmichael73/go-uber-clone/services/api-gateway/router"
 )
 
+// @title Go Uber Clone API
+// @version 1.0
+// @description This is a sample Uber clone API server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 func main() {
 	cfg := config.Load()
 	cfg.ServicePort = getEnvOrDefault("SERVICE_PORT", "8080")

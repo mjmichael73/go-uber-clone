@@ -19,19 +19,34 @@ func NewRideHTTPHandler(rideClient pb.RideServiceClient) *RideHTTPHandler {
 	return &RideHTTPHandler{rideClient: rideClient}
 }
 
+type RideRequest struct {
+	PickupLat     float64 `json:"pickup_latitude" binding:"required"`
+	PickupLng     float64 `json:"pickup_longitude" binding:"required"`
+	PickupAddr    string  `json:"pickup_address"`
+	DropoffLat    float64 `json:"dropoff_latitude" binding:"required"`
+	DropoffLng    float64 `json:"dropoff_longitude" binding:"required"`
+	DropoffAddr   string  `json:"dropoff_address"`
+	VehicleType   string  `json:"vehicle_type"`
+	PaymentMethod string  `json:"payment_method"`
+}
+
+// RequestRide godoc
+// @Summary Request a ride
+// @Description Request a new ride with pickup and dropoff locations
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body RideRequest true "Ride request details"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/request [post]
 func (h *RideHTTPHandler) RequestRide(c *gin.Context) {
 	userID := c.GetString("user_id")
 
-	var req struct {
-		PickupLat     float64 `json:"pickup_latitude" binding:"required"`
-		PickupLng     float64 `json:"pickup_longitude" binding:"required"`
-		PickupAddr    string  `json:"pickup_address"`
-		DropoffLat    float64 `json:"dropoff_latitude" binding:"required"`
-		DropoffLng    float64 `json:"dropoff_longitude" binding:"required"`
-		DropoffAddr   string  `json:"dropoff_address"`
-		VehicleType   string  `json:"vehicle_type"`
-		PaymentMethod string  `json:"payment_method"`
-	}
+	var req RideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -63,11 +78,27 @@ func (h *RideHTTPHandler) RequestRide(c *gin.Context) {
 	c.JSON(http.StatusCreated, rideResponseToJSON(resp))
 }
 
+type AcceptRideRequest struct {
+	DriverID string `json:"driver_id" binding:"required"`
+}
+
+// AcceptRide godoc
+// @Summary Accept a ride request
+// @Description Accept a ride request by a driver
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Param request body AcceptRideRequest true "Accept ride details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/{id}/accept [post]
 func (h *RideHTTPHandler) AcceptRide(c *gin.Context) {
 	rideID := c.Param("id")
-	var req struct {
-		DriverID string `json:"driver_id" binding:"required"`
-	}
+	var req AcceptRideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -88,11 +119,27 @@ func (h *RideHTTPHandler) AcceptRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+type StartRideRequest struct {
+	DriverID string `json:"driver_id" binding:"required"`
+}
+
+// StartRide godoc
+// @Summary Start a ride
+// @Description Mark a ride as started by the driver
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Param request body StartRideRequest true "Start ride details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/{id}/start [post]
 func (h *RideHTTPHandler) StartRide(c *gin.Context) {
 	rideID := c.Param("id")
-	var req struct {
-		DriverID string `json:"driver_id" binding:"required"`
-	}
+	var req StartRideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -113,13 +160,29 @@ func (h *RideHTTPHandler) StartRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+type CompleteRideRequest struct {
+	DriverID       string  `json:"driver_id" binding:"required"`
+	FinalLatitude  float64 `json:"final_latitude"`
+	FinalLongitude float64 `json:"final_longitude"`
+}
+
+// CompleteRide godoc
+// @Summary Complete a ride
+// @Description Mark a ride as completed and calculate final fare
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Param request body CompleteRideRequest true "Complete ride details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/{id}/complete [post]
 func (h *RideHTTPHandler) CompleteRide(c *gin.Context) {
 	rideID := c.Param("id")
-	var req struct {
-		DriverID       string  `json:"driver_id" binding:"required"`
-		FinalLatitude  float64 `json:"final_latitude"`
-		FinalLongitude float64 `json:"final_longitude"`
-	}
+	var req CompleteRideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -144,13 +207,28 @@ func (h *RideHTTPHandler) CompleteRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+type CancelRideRequest struct {
+	Reason string `json:"reason"`
+}
+
+// CancelRide godoc
+// @Summary Cancel a ride
+// @Description Cancel an ongoing or requested ride
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Param request body CancelRideRequest true "Cancel ride details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/{id}/cancel [post]
 func (h *RideHTTPHandler) CancelRide(c *gin.Context) {
 	rideID := c.Param("id")
 	userID := c.GetString("user_id")
 
-	var req struct {
-		Reason string `json:"reason"`
-	}
+	var req CancelRideRequest
 	c.ShouldBindJSON(&req)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
@@ -169,6 +247,18 @@ func (h *RideHTTPHandler) CancelRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+// GetRide godoc
+// @Summary Get ride details
+// @Description Get details of a specific ride by ID
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /rides/{id} [get]
 func (h *RideHTTPHandler) GetRide(c *gin.Context) {
 	rideID := c.Param("id")
 
@@ -184,6 +274,17 @@ func (h *RideHTTPHandler) GetRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+// GetActiveRide godoc
+// @Summary Get active ride
+// @Description Get the currently active ride for the authenticated user
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /rides/active [get]
 func (h *RideHTTPHandler) GetActiveRide(c *gin.Context) {
 	userID := c.GetString("user_id")
 
@@ -199,6 +300,19 @@ func (h *RideHTTPHandler) GetActiveRide(c *gin.Context) {
 	c.JSON(http.StatusOK, rideResponseToJSON(resp))
 }
 
+// GetRideHistory godoc
+// @Summary Get ride history
+// @Description Get the ride history for the authenticated user with pagination
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page number (default 1)"
+// @Param page_size query int false "Page size (default 20)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/history [get]
 func (h *RideHTTPHandler) GetRideHistory(c *gin.Context) {
 	userID := c.GetString("user_id")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -228,14 +342,30 @@ func (h *RideHTTPHandler) GetRideHistory(c *gin.Context) {
 	})
 }
 
+type RateRideRequest struct {
+	Rating  float32 `json:"rating" binding:"required,min=1,max=5"`
+	Comment string  `json:"comment"`
+}
+
+// RateRide godoc
+// @Summary Rate a ride
+// @Description Submit a rating and comment for a completed ride
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Ride ID"
+// @Param request body RateRideRequest true "Rating details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/{id}/rate [post]
 func (h *RideHTTPHandler) RateRide(c *gin.Context) {
 	rideID := c.Param("id")
 	userID := c.GetString("user_id")
 
-	var req struct {
-		Rating  float32 `json:"rating" binding:"required,min=1,max=5"`
-		Comment string  `json:"comment"`
-	}
+	var req RateRideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -258,13 +388,28 @@ func (h *RideHTTPHandler) RateRide(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "rating submitted"})
 }
 
+type EstimateRideRequest struct {
+	PickupLat  float64 `json:"pickup_latitude" binding:"required"`
+	PickupLng  float64 `json:"pickup_longitude" binding:"required"`
+	DropoffLat float64 `json:"dropoff_latitude" binding:"required"`
+	DropoffLng float64 `json:"dropoff_longitude" binding:"required"`
+}
+
+// EstimateRide godoc
+// @Summary Estimate ride fare
+// @Description Get fare estimates for different vehicle types between two locations
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body EstimateRideRequest true "Estimation details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /rides/estimate [post]
 func (h *RideHTTPHandler) EstimateRide(c *gin.Context) {
-	var req struct {
-		PickupLat  float64 `json:"pickup_latitude" binding:"required"`
-		PickupLng  float64 `json:"pickup_longitude" binding:"required"`
-		DropoffLat float64 `json:"dropoff_latitude" binding:"required"`
-		DropoffLng float64 `json:"dropoff_longitude" binding:"required"`
-	}
+	var req EstimateRideRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
