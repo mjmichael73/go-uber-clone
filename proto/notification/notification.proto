@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package notification;
+
+option go_package = "pkg/pb/notification";
+
+import "google/protobuf/timestamp.proto";
+
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc SendBulkNotification(SendBulkNotificationRequest) returns (SendBulkNotificationResponse);
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse);
+  rpc MarkAsRead(MarkAsReadRequest) returns (MarkAsReadResponse);
+  rpc StreamNotifications(StreamNotificationsRequest) returns (stream NotificationEvent);
+}
+
+message SendNotificationRequest {
+  string user_id = 1;
+  string title = 2;
+  string body = 3;
+  NotificationType type = 4;
+  map<string, string> data = 5;
+  NotificationChannel channel = 6;
+}
+
+message SendNotificationResponse {
+  string notification_id = 1;
+  bool success = 2;
+}
+
+message SendBulkNotificationRequest {
+  repeated string user_ids = 1;
+  string title = 2;
+  string body = 3;
+  NotificationType type = 4;
+  map<string, string> data = 5;
+}
+
+message SendBulkNotificationResponse {
+  int32 sent_count = 1;
+  int32 failed_count = 2;
+}
+
+message GetNotificationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetNotificationsResponse {
+  repeated NotificationEvent notifications = 1;
+  int32 total_count = 2;
+}
+
+message MarkAsReadRequest {
+  string notification_id = 1;
+  string user_id = 2;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+}
+
+message StreamNotificationsRequest {
+  string user_id = 1;
+}
+
+message NotificationEvent {
+  string notification_id = 1;
+  string user_id = 2;
+  string title = 3;
+  string body = 4;
+  NotificationType type = 5;
+  map<string, string> data = 6;
+  bool read = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+enum NotificationType {
+  RIDE_REQUESTED = 0;
+  DRIVER_ASSIGNED = 1;
+  DRIVER_ARRIVING = 2;
+  RIDE_STARTED = 3;
+  RIDE_COMPLETED = 4;
+  RIDE_CANCELLED = 5;
+  PAYMENT_PROCESSED = 6;
+  PROMOTION = 7;
+  SYSTEM = 8;
+}
+
+enum NotificationChannel {
+  PUSH = 0;
+  SMS = 1;
+  EMAIL = 2;
+  IN_APP = 3;
+}

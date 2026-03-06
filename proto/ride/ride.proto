@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+package ride;
+
+option go_package = "pkg/pb/ride";
+
+import "google/protobuf/timestamp.proto";
+
+service RideService {
+  rpc RequestRide(RideRequest) returns (RideResponse);
+  rpc AcceptRide(AcceptRideRequest) returns (RideResponse);
+  rpc StartRide(StartRideRequest) returns (RideResponse);
+  rpc CompleteRide(CompleteRideRequest) returns (RideResponse);
+  rpc CancelRide(CancelRideRequest) returns (RideResponse);
+  rpc GetRide(GetRideRequest) returns (RideResponse);
+  rpc GetRideHistory(GetRideHistoryRequest) returns (GetRideHistoryResponse);
+  rpc GetActiveRide(GetActiveRideRequest) returns (RideResponse);
+  rpc RateRide(RateRideRequest) returns (RateRideResponse);
+  rpc EstimateRide(EstimateRideRequest) returns (EstimateRideResponse);
+  rpc StreamRideUpdates(StreamRideRequest) returns (stream RideUpdate);
+}
+
+message RideRequest {
+  string rider_id = 1;
+  Location pickup_location = 2;
+  Location dropoff_location = 3;
+  string vehicle_type = 4;
+  string payment_method = 5;
+}
+
+message AcceptRideRequest {
+  string ride_id = 1;
+  string driver_id = 2;
+}
+
+message StartRideRequest {
+  string ride_id = 1;
+  string driver_id = 2;
+}
+
+message CompleteRideRequest {
+  string ride_id = 1;
+  string driver_id = 2;
+  Location final_location = 3;
+}
+
+message CancelRideRequest {
+  string ride_id = 1;
+  string cancelled_by = 2;
+  string reason = 3;
+}
+
+message GetRideRequest {
+  string ride_id = 1;
+}
+
+message GetActiveRideRequest {
+  string user_id = 1;
+}
+
+message GetRideHistoryRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetRideHistoryResponse {
+  repeated RideResponse rides = 1;
+  int32 total_count = 2;
+}
+
+message RateRideRequest {
+  string ride_id = 1;
+  string user_id = 2;
+  float rating = 3;
+  string comment = 4;
+}
+
+message RateRideResponse {
+  bool success = 1;
+}
+
+message EstimateRideRequest {
+  Location pickup_location = 1;
+  Location dropoff_location = 2;
+}
+
+message EstimateRideResponse {
+  repeated RideEstimate estimates = 1;
+}
+
+message RideEstimate {
+  string vehicle_type = 1;
+  double estimated_fare_min = 2;
+  double estimated_fare_max = 3;
+  double estimated_duration_minutes = 4;
+  double estimated_distance_km = 5;
+  double surge_multiplier = 6;
+}
+
+message StreamRideRequest {
+  string ride_id = 1;
+}
+
+message RideUpdate {
+  string ride_id = 1;
+  RideStatus status = 2;
+  Location driver_location = 3;
+  double eta_minutes = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+message RideResponse {
+  string ride_id = 1;
+  string rider_id = 2;
+  string driver_id = 3;
+  RideStatus status = 4;
+  Location pickup_location = 5;
+  Location dropoff_location = 6;
+  string vehicle_type = 7;
+  double estimated_fare = 8;
+  double actual_fare = 9;
+  double distance_km = 10;
+  double duration_minutes = 11;
+  double surge_multiplier = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp started_at = 14;
+  google.protobuf.Timestamp completed_at = 15;
+  string payment_method = 16;
+  float rider_rating = 17;
+  float driver_rating = 18;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  string address = 3;
+}
+
+enum RideStatus {
+  REQUESTED = 0;
+  MATCHED = 1;
+  DRIVER_ACCEPTED = 2;
+  DRIVER_ARRIVING = 3;
+  DRIVER_ARRIVED = 4;
+  IN_PROGRESS = 5;
+  COMPLETED = 6;
+  CANCELLED = 7;
+}

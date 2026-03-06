@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "pkg/pb/payment";
+
+import "google/protobuf/timestamp.proto";
+
+service PaymentService {
+  rpc CreatePayment(CreatePaymentRequest) returns (PaymentResponse);
+  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse);
+  rpc RefundPayment(RefundPaymentRequest) returns (PaymentResponse);
+  rpc GetPayment(GetPaymentRequest) returns (PaymentResponse);
+  rpc GetPaymentHistory(GetPaymentHistoryRequest) returns (GetPaymentHistoryResponse);
+  rpc AddPaymentMethod(AddPaymentMethodRequest) returns (PaymentMethodResponse);
+  rpc GetPaymentMethods(GetPaymentMethodsRequest) returns (GetPaymentMethodsResponse);
+  rpc CalculateFare(CalculateFareRequest) returns (CalculateFareResponse);
+}
+
+message CreatePaymentRequest {
+  string ride_id = 1;
+  string rider_id = 2;
+  string driver_id = 3;
+  double amount = 4;
+  string currency = 5;
+  string payment_method_id = 6;
+}
+
+message ProcessPaymentRequest {
+  string payment_id = 1;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  string reason = 2;
+  double amount = 3;
+}
+
+message GetPaymentRequest {
+  string payment_id = 1;
+}
+
+message GetPaymentHistoryRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetPaymentHistoryResponse {
+  repeated PaymentResponse payments = 1;
+  int32 total_count = 2;
+}
+
+message AddPaymentMethodRequest {
+  string user_id = 1;
+  string type = 2;
+  string card_number = 3;
+  string expiry_month = 4;
+  string expiry_year = 5;
+  string cvv = 6;
+}
+
+message GetPaymentMethodsRequest {
+  string user_id = 1;
+}
+
+message GetPaymentMethodsResponse {
+  repeated PaymentMethodResponse methods = 1;
+}
+
+message PaymentMethodResponse {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string last_four = 4;
+  string brand = 5;
+  bool is_default = 6;
+}
+
+message CalculateFareRequest {
+  double distance_km = 1;
+  double duration_minutes = 2;
+  string vehicle_type = 3;
+  double surge_multiplier = 4;
+}
+
+message CalculateFareResponse {
+  double base_fare = 1;
+  double distance_fare = 2;
+  double time_fare = 3;
+  double surge_charge = 4;
+  double booking_fee = 5;
+  double total_fare = 6;
+  string currency = 7;
+}
+
+message PaymentResponse {
+  string payment_id = 1;
+  string ride_id = 2;
+  string rider_id = 3;
+  string driver_id = 4;
+  double amount = 5;
+  string currency = 6;
+  PaymentStatus status = 7;
+  string payment_method_id = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp processed_at = 10;
+}
+
+enum PaymentStatus {
+  PENDING = 0;
+  PROCESSING = 1;
+  COMPLETED = 2;
+  FAILED = 3;
+  REFUNDED = 4;
+}

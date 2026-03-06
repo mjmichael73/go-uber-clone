@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package driver;
+
+option go_package = "pkg/pb/driver";
+
+import "google/protobuf/timestamp.proto";
+
+service DriverService {
+  rpc RegisterDriver(RegisterDriverRequest) returns (DriverProfile);
+  rpc GetDriver(GetDriverRequest) returns (DriverProfile);
+  rpc UpdateStatus(UpdateStatusRequest) returns (DriverProfile);
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
+  rpc GetNearbyDrivers(GetNearbyDriversRequest) returns (GetNearbyDriversResponse);
+  rpc GetDriversByIds(GetDriversByIdsRequest) returns (GetDriversByIdsResponse);
+  rpc StreamDriverLocation(stream UpdateLocationRequest) returns (stream LocationUpdate);
+}
+
+message RegisterDriverRequest {
+  string user_id = 1;
+  string license_number = 2;
+  VehicleInfo vehicle = 3;
+}
+
+message VehicleInfo {
+  string make = 1;
+  string model = 2;
+  string year = 3;
+  string color = 4;
+  string plate_number = 5;
+  VehicleType vehicle_type = 6;
+}
+
+message GetDriverRequest {
+  string driver_id = 1;
+}
+
+message UpdateStatusRequest {
+  string driver_id = 1;
+  DriverStatus status = 2;
+}
+
+message UpdateLocationRequest {
+  string driver_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  double heading = 4;
+  double speed = 5;
+}
+
+message UpdateLocationResponse {
+  bool success = 1;
+}
+
+message GetNearbyDriversRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius_km = 3;
+  VehicleType vehicle_type = 4;
+  int32 limit = 5;
+}
+
+message GetNearbyDriversResponse {
+  repeated NearbyDriver drivers = 1;
+}
+
+message NearbyDriver {
+  string driver_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  double distance_km = 4;
+  float rating = 5;
+  VehicleInfo vehicle = 6;
+  double eta_minutes = 7;
+}
+
+message GetDriversByIdsRequest {
+  repeated string driver_ids = 1;
+}
+
+message GetDriversByIdsResponse {
+  repeated DriverProfile drivers = 1;
+}
+
+message DriverProfile {
+  string driver_id = 1;
+  string user_id = 2;
+  string license_number = 3;
+  VehicleInfo vehicle = 4;
+  DriverStatus status = 5;
+  float rating = 6;
+  int32 total_rides = 7;
+  double current_latitude = 8;
+  double current_longitude = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message LocationUpdate {
+  string driver_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+enum DriverStatus {
+  OFFLINE = 0;
+  AVAILABLE = 1;
+  BUSY = 2;
+  ON_RIDE = 3;
+}
+
+enum VehicleType {
+  ECONOMY = 0;
+  COMFORT = 1;
+  PREMIUM = 2;
+  SUV = 3;
+  XL = 4;
+}
