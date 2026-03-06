@@ -176,11 +176,11 @@ func (h *DriverHTTPHandler) UpdateStatus(c *gin.Context) {
 }
 
 type UpdateLocationRequest struct {
-	DriverID  string  `json:"driver_id"`
-	Latitude  float64 `json:"latitude" binding:"required"`
-	Longitude float64 `json:"longitude" binding:"required"`
-	Heading   float64 `json:"heading"`
-	Speed     float64 `json:"speed"`
+	DriverID  string   `json:"driver_id"`
+	Latitude  *float64 `json:"latitude" binding:"required"`
+	Longitude *float64 `json:"longitude" binding:"required"`
+	Heading   float64  `json:"heading"`
+	Speed     float64  `json:"speed"`
 }
 
 // UpdateLocation godoc
@@ -217,8 +217,8 @@ func (h *DriverHTTPHandler) UpdateLocation(c *gin.Context) {
 
 	resp, err := h.driverClient.UpdateLocation(ctx, &pb.UpdateLocationRequest{
 		DriverId:  req.DriverID,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
+		Latitude:  *req.Latitude,
+		Longitude: *req.Longitude,
 		Heading:   req.Heading,
 		Speed:     req.Speed,
 	})

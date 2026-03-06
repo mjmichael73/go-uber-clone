@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/pkg/config"
+	"github.com/mjmichael73/go-uber-clone/pkg/metrics"
+	"github.com/mjmichael73/go-uber-clone/pkg/tracing"
 	driverPb "github.com/mjmichael73/go-uber-clone/pkg/pb/driver"
 	notifPb "github.com/mjmichael73/go-uber-clone/pkg/pb/notification"
 	ridePb "github.com/mjmichael73/go-uber-clone/pkg/pb/ride"
@@ -43,6 +46,24 @@ import (
 func main() {
 	cfg := config.Load()
 	cfg.ServicePort = getEnvOrDefault("SERVICE_PORT", "8080")
+	metricsPort := getEnvOrDefault("METRICS_PORT", "9091")
+	jaegerEndpoint := getEnvOrDefault("JAEGER_ENDPOINT", "jaeger:4317")
+
+	// Tracing
+	shutdown, err := tracing.InitTracer("api-gateway", jaegerEndpoint)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize tracer: %v", err)
+	} else {
+		defer shutdown(context.Background())
+	}
+
+	// Metrics
+	go func() {
+		log.Printf("Starting metrics server on :%s", metricsPort)
+		if err := metrics.StartMetricsServer(fmt.Sprintf(":%s", metricsPort)); err != nil {
+			log.Printf("Warning: Failed to start metrics server: %v", err)
+		}
+	}()
 
 	// Connect to all gRPC services
 	userConn := mustConnect("user-service", cfg.UserServiceAddr)
@@ -96,6 +117,14 @@ func mustConnect(name, addr string) *grpc.ClientConn {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithTimeout(10*time.Second),
+		grpc.WithChainUnaryInterceptor(
+			tracing.UnaryClientInterceptor(),
+			metrics.UnaryClientInterceptor(),
+		),
+		grpc.WithChainStreamInterceptor(
+			tracing.StreamClientInterceptor(),
+			metrics.StreamClientInterceptor(),
+		),
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect to %s at %s: %v", name, addr, err)

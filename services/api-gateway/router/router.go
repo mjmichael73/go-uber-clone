@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/mjmichael73/go-uber-clone/services/api-gateway/docs"
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
+	"github.com/mjmichael73/go-uber-clone/pkg/tracing"
 	"github.com/mjmichael73/go-uber-clone/services/api-gateway/handlers"
 )
 
@@ -20,6 +21,9 @@ func SetupRouter(
 	jwtManager *auth.JWTManager,
 ) *gin.Engine {
 	r := gin.Default()
+
+	// Tracing middleware
+	r.Use(tracing.HTTPMiddleware("api-gateway"))
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
@@ -95,6 +99,13 @@ func AuthMiddleware(jwtManager *auth.JWTManager) gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("user_type", claims.UserType)
 		c.Set("email", claims.Email)
+
+		// If user is a driver, we should ideally have their driver_id.
+		// For now, let's assume user_id is the driver_id if user_type is DRIVER.
+		// In a real system, you'd look this up or include it in the JWT.
+		if claims.UserType == "DRIVER" {
+			c.Set("driver_id", claims.UserID)
+		}
 
 		// Add token to context for gRPC calls
 		md := metadata.Pairs("authorization", "Bearer "+tokenStr)

@@ -1,0 +1,146 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "gRPC Request Rate by Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_server_requests_total[5m])) by (service)",
+          "legendFormat": "{{ service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "title": "gRPC Error Rate by Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_server_requests_total{code!=\"OK\"}[5m])) by (service, code)",
+          "legendFormat": "{{ service }} - {{ code }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "drawStyle": "bars" }
+        }
+      }
+    },
+    {
+      "title": "gRPC Latency p50 / p95 / p99",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(grpc_server_request_duration_seconds_bucket[5m])) by (le, service))",
+          "legendFormat": "{{ service }} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(grpc_server_request_duration_seconds_bucket[5m])) by (le, service))",
+          "legendFormat": "{{ service }} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(grpc_server_request_duration_seconds_bucket[5m])) by (le, service))",
+          "legendFormat": "{{ service }} p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "title": "gRPC Requests In-Flight",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(grpc_server_requests_in_flight) by (service)",
+          "legendFormat": "{{ service }}"
+        }
+      ]
+    },
+    {
+      "title": "gRPC Method Latency Heatmap",
+      "type": "heatmap",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 18 },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_server_request_duration_seconds_bucket[5m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{ le }}"
+        }
+      ]
+    },
+    {
+      "title": "Top 10 Slowest Methods (p99)",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.99, sum(rate(grpc_server_request_duration_seconds_bucket[5m])) by (le, method)))",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Inter-Service Call Map",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_client_requests_total[5m])) by (service, target_service)",
+          "legendFormat": "{{ service }} → {{ target_service }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "title": "Stream Messages Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_server_stream_messages_sent_total[5m])) by (service)",
+          "legendFormat": "{{ service }} sent"
+        },
+        {
+          "expr": "sum(rate(grpc_server_stream_messages_received_total[5m])) by (service)",
+          "legendFormat": "{{ service }} received"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "mps" }
+      }
+    },
+    {
+      "title": "Database Query Latency (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(uber_database_query_duration_seconds_bucket[5m])) by (le, service, operation))",
+          "legendFormat": "{{ service }}/{{ operation }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["uber", "grpc", "performance"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "gRPC Performance",
+  "uid": "uber-grpc"
+}

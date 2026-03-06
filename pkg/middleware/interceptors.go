@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
+	"github.com/mjmichael73/go-uber-clone/pkg/metrics"
+	"github.com/mjmichael73/go-uber-clone/pkg/tracing"
 )
 
 // UnaryLoggingInterceptor logs all unary gRPC calls
@@ -124,4 +126,24 @@ func RecoveryInterceptor(
 		}
 	}()
 	return handler(ctx, req)
+}
+
+// GetUnaryInterceptors returns all unary interceptors including metrics and tracing
+func GetUnaryInterceptors(jwtManager *auth.JWTManager, publicMethods map[string]bool) []grpc.UnaryServerInterceptor {
+	return []grpc.UnaryServerInterceptor{
+		tracing.UnaryServerInterceptor(),
+		metrics.UnaryServerInterceptor(),
+		RecoveryInterceptor,
+		UnaryLoggingInterceptor,
+		UnaryAuthInterceptor(jwtManager, publicMethods),
+	}
+}
+
+// GetStreamInterceptors returns all stream interceptors including metrics and tracing
+func GetStreamInterceptors() []grpc.StreamServerInterceptor {
+	return []grpc.StreamServerInterceptor{
+		tracing.StreamServerInterceptor(),
+		metrics.StreamServerInterceptor(),
+		StreamLoggingInterceptor,
+	}
 }

@@ -1,0 +1,208 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "🚗 Rides Overview",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Rides Requested (Rate)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_rides_requested_total[5m])) by (vehicle_type)",
+          "legendFormat": "{{ vehicle_type }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "drawStyle": "line", "fillOpacity": 20 }
+        }
+      }
+    },
+    {
+      "title": "Active Rides",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(uber_rides_active)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Ride Completion Rate",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 4, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_rides_completed_total[1h])) / sum(rate(uber_rides_requested_total[1h])) * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 85 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Average Fare ($)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 4, "x": 16, "y": 1 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, rate(uber_ride_fare_dollars_bucket[1h]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" }
+      }
+    },
+    {
+      "title": "Surge Multiplier Distribution",
+      "type": "histogram",
+      "gridPos": { "h": 8, "w": 4, "x": 20, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_surge_multiplier_bucket[1h])) by (le)"
+        }
+      ]
+    },
+    {
+      "title": "👤 Drivers & Users",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+    },
+    {
+      "title": "Online Drivers",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "targets": [
+        {
+          "expr": "sum(uber_drivers_online) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "fillOpacity": 30 }
+        }
+      }
+    },
+    {
+      "title": "User Registrations",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_user_registrations_total[5m])) by (user_type)",
+          "legendFormat": "{{ user_type }}"
+        }
+      ]
+    },
+    {
+      "title": "Login Success/Fail Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_user_logins_total[5m])) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    },
+    {
+      "title": "💰 Payments",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }
+    },
+    {
+      "title": "Payment Processing Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_payments_processed_total[5m])) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    },
+    {
+      "title": "Revenue (Platform Fee)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 19 },
+      "targets": [
+        {
+          "expr": "sum(uber_revenue_total_dollars)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" }
+      }
+    },
+    {
+      "title": "Payment Processing Latency (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 19 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(uber_payment_processing_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(uber_payment_processing_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "title": "Driver Payouts Total",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 19 },
+      "targets": [
+        {
+          "expr": "sum(uber_driver_payouts_total_dollars)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" }
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["uber", "overview"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Uber System Overview",
+  "uid": "uber-overview"
+}

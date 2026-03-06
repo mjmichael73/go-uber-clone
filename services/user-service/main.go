@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"os"
@@ -10,16 +16,12 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
-
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/pkg/config"
+	"github.com/mjmichael73/go-uber-clone/pkg/metrics"
 	"github.com/mjmichael73/go-uber-clone/pkg/middleware"
 	pb "github.com/mjmichael73/go-uber-clone/pkg/pb/user"
+	"github.com/mjmichael73/go-uber-clone/pkg/tracing"
 	"github.com/mjmichael73/go-uber-clone/services/user-service/handler"
 	"github.com/mjmichael73/go-uber-clone/services/user-service/repository"
 )
@@ -27,6 +29,24 @@ import (
 func main() {
 	cfg := config.Load()
 	cfg.ServicePort = getEnvOrDefault("SERVICE_PORT", "50051")
+	metricsPort := getEnvOrDefault("METRICS_PORT", "9091")
+	jaegerEndpoint := getEnvOrDefault("JAEGER_ENDPOINT", "jaeger:4317")
+
+	// Tracing
+	shutdown, err := tracing.InitTracer("user-service", jaegerEndpoint)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize tracer: %v", err)
+	} else {
+		defer shutdown(context.Background())
+	}
+
+	// Metrics
+	go func() {
+		log.Printf("Starting metrics server on :%s", metricsPort)
+		if err := metrics.StartMetricsServer(fmt.Sprintf(":%s", metricsPort)); err != nil {
+			log.Printf("Warning: Failed to start metrics server: %v", err)
+		}
+	}()
 
 	// Connect to database
 	db, err := sql.Open("postgres", cfg.GetDSN())
@@ -59,14 +79,13 @@ func main() {
 	// Create gRPC server with interceptors
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			middleware.RecoveryInterceptor,
-			middleware.UnaryLoggingInterceptor,
-			middleware.UnaryAuthInterceptor(jwtManager, publicMethods),
+			middleware.GetUnaryInterceptors(jwtManager, publicMethods)...,
 		),
 		grpc.ChainStreamInterceptor(
-			middleware.StreamLoggingInterceptor,
+			middleware.GetStreamInterceptors()...,
 		),
 	)
+	metrics.RegisterServer(grpcServer)
 
 	// Register services
 	pb.RegisterUserServiceServer(grpcServer, userHandler)

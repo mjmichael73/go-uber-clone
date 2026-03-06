@@ -49,6 +49,8 @@ services:
     container_name: uber-user-service
     environment:
       SERVICE_PORT: "50051"
+      METRICS_PORT: "9091"
+      JAEGER_ENDPOINT: "jaeger:4317"
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: uber
@@ -59,11 +61,14 @@ services:
       REDIS_ADDR: redis:6379
     ports:
       - "50051:50051"
+      # - "9091:9091" # Metrics port (scraped internally by Prometheus)
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     restart: unless-stopped
 
   driver-service:
@@ -75,6 +80,8 @@ services:
     container_name: uber-driver-service
     environment:
       SERVICE_PORT: "50052"
+      METRICS_PORT: "9091"
+      JAEGER_ENDPOINT: "jaeger:4317"
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: uber
@@ -84,11 +91,14 @@ services:
       REDIS_ADDR: redis:6379
     ports:
       - "50052:50052"
+      # - "9091:9091" # Metrics port (scraped internally by Prometheus)
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     restart: unless-stopped
 
   ride-service:
@@ -100,6 +110,8 @@ services:
     container_name: uber-ride-service
     environment:
       SERVICE_PORT: "50053"
+      METRICS_PORT: "9091"
+      JAEGER_ENDPOINT: "jaeger:4317"
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: uber
@@ -113,6 +125,7 @@ services:
       NOTIFICATION_SERVICE_ADDR: notification-service:50056
     ports:
       - "50053:50053"
+      # - "9091:9091" # Metrics port (scraped internally by Prometheus)
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,6 +136,8 @@ services:
       driver-service:
         condition: service_started
       payment-service:
+        condition: service_started
+      jaeger:
         condition: service_started
     restart: unless-stopped
 
@@ -194,6 +209,8 @@ services:
     container_name: uber-api-gateway
     environment:
       SERVICE_PORT: "8080"
+      METRICS_PORT: "9091"
+      JAEGER_ENDPOINT: "jaeger:4317"
       JWT_SECRET: "your-super-secret-key-change-in-production"
       USER_SERVICE_ADDR: user-service:50051
       DRIVER_SERVICE_ADDR: driver-service:50052
@@ -203,6 +220,7 @@ services:
       NOTIFICATION_SERVICE_ADDR: notification-service:50056
     ports:
       - "8080:8080"
+      # - "9091:9091" # Metrics port (scraped internally by Prometheus)
     depends_on:
       - user-service
       - driver-service
@@ -210,6 +228,42 @@ services:
       - location-service
       - payment-service
       - notification-service
+      - jaeger
+    restart: unless-stopped
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: uber-prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: uber-grafana
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: uber-jaeger
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
     restart: unless-stopped
 
 volumes:

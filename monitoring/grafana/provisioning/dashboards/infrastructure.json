@@ -1,0 +1,133 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Service Health",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "up",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ]
+        }
+      }
+    },
+    {
+      "title": "Database Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "uber_database_connections",
+          "legendFormat": "{{ service }} {{ state }}"
+        }
+      ]
+    },
+    {
+      "title": "Go Goroutines",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
+      "targets": [
+        {
+          "expr": "go_goroutines",
+          "legendFormat": "{{ job }}"
+        }
+      ]
+    },
+    {
+      "title": "Go Memory (Heap)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "targets": [
+        {
+          "expr": "go_memstats_heap_alloc_bytes",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      }
+    },
+    {
+      "title": "Redis Operation Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(uber_redis_operation_duration_seconds_bucket[5m])) by (le, service))",
+          "legendFormat": "{{ service }} p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "title": "NATS Messages Published",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(rate(uber_nats_messages_published_total[5m])) by (service, subject)",
+          "legendFormat": "{{ service }}/{{ subject }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "mps" }
+      }
+    },
+    {
+      "title": "WebSocket Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "targets": [
+        {
+          "expr": "uber_websocket_connections",
+          "legendFormat": "{{ type }}"
+        }
+      ]
+    },
+    {
+      "title": "Process CPU",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[5m])",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" }
+      }
+    },
+    {
+      "title": "GC Duration (p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(go_gc_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["uber", "infrastructure"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Infrastructure & Resources",
+  "uid": "uber-infra"
+}
