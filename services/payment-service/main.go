@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/pkg/config"
 	"github.com/mjmichael73/go-uber-clone/pkg/middleware"
 	pb "github.com/mjmichael73/go-uber-clone/pkg/pb/payment"
@@ -36,11 +37,13 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 
 	paymentHandler := handler.NewPaymentHandler(db)
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret, time.Duration(cfg.JWTExpiration)*time.Hour)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			middleware.RecoveryInterceptor,
 			middleware.UnaryLoggingInterceptor,
+			middleware.UnaryAuthInterceptor(jwtManager, nil),
 		),
 	)
 

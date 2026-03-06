@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/pkg/config"
 	"github.com/mjmichael73/go-uber-clone/pkg/middleware"
 	driverPb "github.com/mjmichael73/go-uber-clone/pkg/pb/driver"
@@ -74,6 +75,7 @@ func main() {
 	paymentClient := paymentPb.NewPaymentServiceClient(paymentConn)
 
 	// Initialize
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret, time.Duration(cfg.JWTExpiration)*time.Hour)
 	rideRepo := repository.NewRideRepository(db)
 	rideMatcher, err := matcher.NewRideMatcher(cfg.DriverServiceAddr, cfg.NotificationServiceAddr, rideRepo)
 	if err != nil {
@@ -87,6 +89,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			middleware.RecoveryInterceptor,
 			middleware.UnaryLoggingInterceptor,
+			middleware.UnaryAuthInterceptor(jwtManager, nil),
 		),
 	)
 

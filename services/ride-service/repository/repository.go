@@ -37,7 +37,7 @@ func (r *RideRepository) GetByID(ctx context.Context, id string) (*model.Ride, e
 	query := `
 		SELECT id, rider_id, driver_id, status, pickup_latitude, pickup_longitude,
 		       pickup_address, dropoff_latitude, dropoff_longitude, dropoff_address,
-		       vehicle_type, estimated_fare, actual_fare, distance_km, duration_minutes,
+		       vehicle_type, estimated_fare, COALESCE(actual_fare, 0), COALESCE(distance_km, 0), COALESCE(duration_minutes, 0),
 		       surge_multiplier, payment_method, rider_rating, driver_rating,
 		       COALESCE(cancellation_reason, ''), cancelled_by,
 		       created_at, accepted_at, started_at, completed_at, cancelled_at
@@ -109,7 +109,7 @@ func (r *RideRepository) GetActiveRideForUser(ctx context.Context, userID string
 	query := `
 		SELECT id, rider_id, driver_id, status, pickup_latitude, pickup_longitude,
 		       pickup_address, dropoff_latitude, dropoff_longitude, dropoff_address,
-		       vehicle_type, estimated_fare, actual_fare, distance_km, duration_minutes,
+		       vehicle_type, estimated_fare, COALESCE(actual_fare, 0), COALESCE(distance_km, 0), COALESCE(duration_minutes, 0),
 		       surge_multiplier, payment_method, rider_rating, driver_rating,
 		       COALESCE(cancellation_reason, ''), cancelled_by,
 		       created_at, accepted_at, started_at, completed_at, cancelled_at
@@ -147,7 +147,7 @@ func (r *RideRepository) GetRideHistory(ctx context.Context, userID string, page
 	query := `
 		SELECT id, rider_id, driver_id, status, pickup_latitude, pickup_longitude,
 		       pickup_address, dropoff_latitude, dropoff_longitude, dropoff_address,
-		       vehicle_type, estimated_fare, actual_fare, distance_km, duration_minutes,
+		       vehicle_type, estimated_fare, COALESCE(actual_fare, 0), COALESCE(distance_km, 0), COALESCE(duration_minutes, 0),
 		       surge_multiplier, payment_method, rider_rating, driver_rating,
 		       COALESCE(cancellation_reason, ''), cancelled_by,
 		       created_at, accepted_at, started_at, completed_at, cancelled_at

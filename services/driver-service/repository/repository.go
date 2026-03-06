@@ -110,15 +110,14 @@ func (r *DriverRepository) FindNearby(ctx context.Context, lat, lng, radiusKm fl
 		       )) AS distance_km
 		FROM drivers
 		WHERE status = 'AVAILABLE'
-		  AND is_verified = true
 		  AND ($4 = '' OR vehicle_type = $4)
 		  AND current_latitude BETWEEN $1 - ($3/111.0) AND $1 + ($3/111.0)
 		  AND current_longitude BETWEEN $2 - ($3/(111.0 * cos(radians($1)))) AND $2 + ($3/(111.0 * cos(radians($1))))
-		HAVING (6371 * acos(
-		    cos(radians($1)) * cos(radians(current_latitude)) *
-		    cos(radians(current_longitude) - radians($2)) +
-		    sin(radians($1)) * sin(radians(current_latitude))
-		)) <= $3
+		  AND (6371 * acos(
+		      cos(radians($1)) * cos(radians(current_latitude)) *
+		      cos(radians(current_longitude) - radians($2)) +
+		      sin(radians($1)) * sin(radians(current_latitude))
+		  )) <= $3
 		ORDER BY distance_km ASC
 		LIMIT $5`
 

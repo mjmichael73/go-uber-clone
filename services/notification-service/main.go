@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"time"
+
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
@@ -16,6 +18,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/pkg/config"
 	"github.com/mjmichael73/go-uber-clone/pkg/middleware"
 	pb "github.com/mjmichael73/go-uber-clone/pkg/pb/notification"
@@ -44,11 +47,13 @@ func main() {
 	}
 
 	notifHandler := handler.NewNotificationHandler(rdb, nc)
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret, time.Duration(cfg.JWTExpiration)*time.Hour)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			middleware.RecoveryInterceptor,
 			middleware.UnaryLoggingInterceptor,
+			middleware.UnaryAuthInterceptor(jwtManager, nil),
 		),
 	)
 

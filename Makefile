@@ -42,5 +42,5 @@ docker-down:
 
 migrate:
 	@for f in migrations/*.sql; do \
-		psql "postgresql://uber:uber123@localhost:5432/uberdb?sslmode=disable" -f $$f; \
+		docker exec -i uber-postgres psql -U uber -d uberdb < $$f; \
 	done

@@ -64,7 +64,6 @@ func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
-	// Generate JWT token
 	token, err := h.jwtManager.Generate(user.ID, user.UserType, user.Email)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to generate token")

@@ -35,6 +35,12 @@ func (h *DriverHandler) RegisterDriver(ctx context.Context, req *pb.RegisterDriv
 		return nil, status.Error(codes.InvalidArgument, "user_id and license_number required")
 	}
 
+	// Check if driver already exists for this user
+	existing, _ := h.repo.GetByUserID(ctx, req.UserId)
+	if existing != nil {
+		return driverToProto(existing), nil
+	}
+
 	vehicleType := "ECONOMY"
 	if req.Vehicle != nil {
 		vehicleType = req.Vehicle.VehicleType.String()

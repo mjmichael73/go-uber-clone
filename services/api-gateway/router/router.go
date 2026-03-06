@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/mjmichael73/go-uber-clone/pkg/auth"
 	"github.com/mjmichael73/go-uber-clone/services/api-gateway/handlers"
@@ -87,6 +88,11 @@ func AuthMiddleware(jwtManager *auth.JWTManager) gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("user_type", claims.UserType)
 		c.Set("email", claims.Email)
+
+		// Add token to context for gRPC calls
+		md := metadata.Pairs("authorization", "Bearer "+tokenStr)
+		c.Request = c.Request.WithContext(metadata.NewOutgoingContext(c.Request.Context(), md))
+
 		c.Next()
 	}
 }

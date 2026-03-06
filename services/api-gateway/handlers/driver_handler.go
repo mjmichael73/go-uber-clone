@@ -88,11 +88,23 @@ func (h *DriverHTTPHandler) GetDriver(c *gin.Context) {
 
 func (h *DriverHTTPHandler) UpdateStatus(c *gin.Context) {
 	var req struct {
-		DriverID string `json:"driver_id" binding:"required"`
+		DriverID string `json:"driver_id"`
 		Status   string `json:"status" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// If driver_id is not in body, try to get it from context (if driver is logged in)
+	if req.DriverID == "" {
+		// In a real app, we'd check if the user is a driver and get their driver_id
+		// For now, let's see if it's passed in the context
+		req.DriverID = c.GetString("driver_id")
+	}
+
+	if req.DriverID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "driver_id is required"})
 		return
 	}
 
@@ -123,7 +135,7 @@ func (h *DriverHTTPHandler) UpdateStatus(c *gin.Context) {
 
 func (h *DriverHTTPHandler) UpdateLocation(c *gin.Context) {
 	var req struct {
-		DriverID  string  `json:"driver_id" binding:"required"`
+		DriverID  string  `json:"driver_id"`
 		Latitude  float64 `json:"latitude" binding:"required"`
 		Longitude float64 `json:"longitude" binding:"required"`
 		Heading   float64 `json:"heading"`
@@ -131,6 +143,15 @@ func (h *DriverHTTPHandler) UpdateLocation(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.DriverID == "" {
+		req.DriverID = c.GetString("driver_id")
+	}
+
+	if req.DriverID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "driver_id is required"})
 		return
 	}
 
